@@ -1,4 +1,4 @@
-import { IBarcode } from '../IBarcode'
+import { IBarcode } from './IBarcode'
 
 const START_DIGTS = '01011'
 const SEPARATOR_DIGITS = '01'

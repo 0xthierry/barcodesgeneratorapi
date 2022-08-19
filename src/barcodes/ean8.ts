@@ -1,4 +1,4 @@
-import { IBarcode } from '../IBarcode'
+import { IBarcode } from './IBarcode'
 
 const START_DIGTS = '101'
 const END_DIGTS = '101'
