@@ -1,59 +1,75 @@
+import { RegexError } from '../errors'
 import { IBarcode } from './IBarcode'
 
 const START_DIGTS = '01011'
 const SEPARATOR_DIGITS = '01'
 const VALID_DATA_REGEX = /^[0-9]{2}$/gi
 
-const L_ENCONDING = {
-  '0': '0001101',
-  '1': '0011001',
-  '2': '0010011',
-  '3': '0111101',
-  '4': '0100011',
-  '5': '0110001',
-  '6': '0101111',
-  '7': '0111011',
-  '8': '0110111',
-  '9': '0001011',
+const ENCONDIG_TYPES = {
+  L: 0,
+  G: 1,
 } as const
-const G_ENCONDING = {
-  '0': '0100111',
-  '1': '0110011',
-  '2': '0011011',
-  '3': '0100001',
-  '4': '0011101',
-  '5': '0111001',
-  '6': '0000101',
-  '7': '0010001',
-  '8': '0001001',
-  '9': '0010111',
-} as const
-const ENCONDINGS = {
-  G: G_ENCONDING,
-  L: L_ENCONDING,
-} as const
+
+const ENCONDINGS = [
+  [
+    '0001101',
+    '0011001',
+    '0010011',
+    '0111101',
+    '0100011',
+    '0110001',
+    '0101111',
+    '0111011',
+    '0110111',
+    '0001011',
+  ],
+  [
+    '0100111',
+    '0110011',
+    '0011011',
+    '0100001',
+    '0011101',
+    '0111001',
+    '0000101',
+    '0010001',
+    '0001001',
+    '0010111',
+  ],
+]
 
 const PATTERNS = ['LL', 'LG', 'GL', 'GG'] as const
 
 export class EAN2 implements IBarcode {
-  constructor(private readonly data: string) {}
+  text: string
+  data: string
 
-  valid() {
-    return this.data.search(VALID_DATA_REGEX) !== -1
+  constructor(data: string) {
+    this.text = data
+    this.data = data
+    this.validate()
+  }
+
+  validate() {
+    const isRegexValid = this.text.search(VALID_DATA_REGEX) !== -1
+
+    if (!isRegexValid) {
+      throw new RegexError()
+    }
   }
 
   encode() {
     const patternIndex = Number(this.data) % 4
     const pattern = PATTERNS[patternIndex]
-    const [leftPattern, rightPattern] = pattern.split('')
-    const [leftDigit, rightDigit] = this.data.split('')
-    // @ts-expect-error
-    const rightValue = ENCONDINGS[rightPattern][rightDigit] as string
-    // @ts-expect-error
-    const leftValue = ENCONDINGS[leftPattern][leftDigit] as string
+
+    const digits = pattern.split('').map((p, idx) => {
+      const currentDigit = Number(this.data[idx])
+      // @ts-expect-error
+      return ENCONDINGS[ENCONDIG_TYPES[p]][currentDigit]
+    })
 
     return {
-      data: `${START_DIGTS}${leftValue}${SEPARATOR_DIGITS}${rightValue}`,
+      data: [START_DIGTS, digits[0], SEPARATOR_DIGITS, digits[1]].join(''),
+      text: this.text,
     }
   }
 }

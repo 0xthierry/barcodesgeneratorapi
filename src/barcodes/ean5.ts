@@ -1,36 +1,41 @@
+import { RegexError } from '../errors'
 import { IBarcode } from './IBarcode'
 
 const START_DIGTS = '01011'
 const SEPARATOR_DIGITS = '01'
 const VALID_DATA_REGEX = /^[0-9]{5}$/gi
-const L_ENCONDING = {
-  '0': '0001101',
-  '1': '0011001',
-  '2': '0010011',
-  '3': '0111101',
-  '4': '0100011',
-  '5': '0110001',
-  '6': '0101111',
-  '7': '0111011',
-  '8': '0110111',
-  '9': '0001011',
+
+const ENCONDIG_TYPES = {
+  L: 0,
+  G: 1,
 } as const
-const G_ENCONDING = {
-  '0': '0100111',
-  '1': '0110011',
-  '2': '0011011',
-  '3': '0100001',
-  '4': '0011101',
-  '5': '0111001',
-  '6': '0000101',
-  '7': '0010001',
-  '8': '0001001',
-  '9': '0010111',
-} as const
-const ENCONDINGS = {
-  G: G_ENCONDING,
-  L: L_ENCONDING,
-} as const
+
+const ENCONDINGS = [
+  [
+    '0001101',
+    '0011001',
+    '0010011',
+    '0111101',
+    '0100011',
+    '0110001',
+    '0101111',
+    '0111011',
+    '0110111',
+    '0001011',
+  ],
+  [
+    '0100111',
+    '0110011',
+    '0011011',
+    '0100001',
+    '0011101',
+    '0111001',
+    '0000101',
+    '0010001',
+    '0001001',
+    '0010111',
+  ],
+]
 
 const PATTERNS = [
   'GGLLL',
@@ -46,10 +51,21 @@ const PATTERNS = [
 ] as const
 
 export class EAN5 implements IBarcode {
-  constructor(private readonly data: string) {}
+  text: string
+  data: string
 
-  valid() {
-    return this.data.search(VALID_DATA_REGEX) !== -1
+  constructor(data: string) {
+    this.text = data
+    this.data = data
+    this.validate()
+  }
+
+  validate() {
+    const isRegexValid = this.text.search(VALID_DATA_REGEX) !== -1
+
+    if (!isRegexValid) {
+      throw new RegexError()
+    }
   }
 
   encode() {
@@ -58,11 +74,10 @@ export class EAN5 implements IBarcode {
         return idx % 2 === 0 ? acc + Number(n) * 3 : acc + Number(n) * 9
       }, 0) % 10
 
-    const pattern = PATTERNS[patternIndex]
-    const digits = pattern.split('').map((p, idx) => {
-      const currentDigit = this.data[idx]
+    const digits = PATTERNS[patternIndex].split('').map((p, idx) => {
+      const currentDigit = Number(this.data[idx])
       // @ts-expect-error
-      return ENCONDINGS[p][currentDigit]
+      return ENCONDINGS[ENCONDIG_TYPES[p]][currentDigit]
     })
 
     return {
@@ -78,6 +93,7 @@ export class EAN5 implements IBarcode {
         SEPARATOR_DIGITS,
         digits[4],
       ].join(''),
+      text: this.text,
     }
   }
 }

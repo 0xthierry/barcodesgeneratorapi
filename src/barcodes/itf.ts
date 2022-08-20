@@ -1,21 +1,22 @@
+import { RegexError } from '../errors'
 import { IBarcode } from './IBarcode'
 
 const START_DIGTS = '1010'
 const END_DIGITS = '1101'
-const VALID_DATA_REGEX = /^[0-9]$/gi
+const VALID_DATA_REGEX = /^[0-9]*/gi
 
-const ENCONDING = {
-  '0': '00110',
-  '1': '10001',
-  '2': '01001',
-  '3': '11000',
-  '4': '00101',
-  '5': '10100',
-  '6': '01100',
-  '7': '00011',
-  '8': '10010 ',
-  '9': '01010',
-} as const
+const ENCONDING = [
+  '00110',
+  '10001',
+  '01001',
+  '11000',
+  '00101',
+  '10100',
+  '01100',
+  '00011',
+  '10010 ',
+  '01010',
+] as const
 
 // first pair is black bar 0=1 bar and 1=2 bar
 // second pair is white bar 0=1 bar and 1=2 bar
@@ -28,17 +29,25 @@ const ENCONDING = {
 // 67 = 10110110100100
 
 export class ITF implements IBarcode {
-  constructor(
-    protected readonly data: string,
-    private readonly checkDigit: boolean = false,
-  ) {}
+  text: string
+  data: string
 
-  valid() {
-    return this.data.search(VALID_DATA_REGEX) !== -1
+  constructor(data: string, private readonly checkDigit: boolean = false) {
+    this.text = data
+    this.data = data
+    this.validate()
+  }
+
+  validate() {
+    const isRegexValid = this.text.search(VALID_DATA_REGEX) !== -1
+
+    if (!isRegexValid) {
+      throw new RegexError()
+    }
   }
 
   checksum() {
-    const { odd, even } = this.data.split('').reduce(
+    const { odd, even } = this.text.split('').reduce(
       (acc, n, idx) => {
         if (idx % 2 === 0) {
           return { ...acc, odd: acc.odd + Number(n) }
@@ -48,32 +57,19 @@ export class ITF implements IBarcode {
       },
       { odd: 0, even: 0 },
     )
-
     return (10 - ((3 * odd + even) % 10)) % 10
   }
 
   encode() {
-    // it should be optional
-    const dataWithChecksum = `${this.data}${
-      this.checkDigit ? this.checksum() : ''
-    }`
-
-    const evenData =
-      dataWithChecksum.length % 2 !== 0
-        ? `0${dataWithChecksum}`
-        : dataWithChecksum
-
-    if (evenData.match(/(..?)/g) === null) {
-      throw new Error('Invalid')
-    }
-    const pairs = evenData.match(/(..?)/g) as string[]
+    const checksum = this.checksum()
+    this.data = `${this.data}${this.checkDigit ? checksum : ''}`
+    this.data = this.data.length % 2 !== 0 ? `0${this.data}` : this.data
+    const pairs = this.data.match(/(..?)/g) as string[]
     const barcode = pairs
       .map((pair) => {
         const [firstDigit, secondDigit] = pair.split('')
-        // @ts-expect-error
-        const firstDigitEncondig = ENCONDING[firstDigit] as string
-        // @ts-expect-error
-        const secondDigitEncondig = ENCONDING[secondDigit] as string
+        const firstDigitEncondig = ENCONDING[Number(firstDigit)]
+        const secondDigitEncondig = ENCONDING[Number(secondDigit)]
 
         return firstDigitEncondig
           .split('')
@@ -89,6 +85,8 @@ export class ITF implements IBarcode {
 
     return {
       data: [START_DIGTS, barcode, END_DIGITS].join(''),
+      text: this.text,
+      checksum: checksum.toString(),
     }
   }
 }
