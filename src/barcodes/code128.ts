@@ -145,10 +145,21 @@ const BINARIES = [
 const getBinaryByIndex = (index: number) => BINARIES[index]
 
 // https://www.codetable.net/unicodecharacters?page=1
+// null-_ É-Ï
+const CHAR_SET_A = '[\x00-\x5f\xc9-\xcf]'
+// space-del É-Ï
+const CHAR_SET_B = '[\x20-\x7f\xc9-\xcf]'
+// 00-99 FNC1
+const CHAR_SET_C = '(\xcf*[0-9]{2}\xcf*)'
+
+// https://www.codetable.net/unicodecharacters?page=1
 const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
+  // space - _
   if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
-  if (str.match(/^[\x00-\x1e]+$/g) !== null) return str.charCodeAt(0) + 64
-  if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
+  // null - US
+  if (str.match(/^[\x00-\x1f]+$/g) !== null) return str.charCodeAt(0) + 64
+  // É - Ï
+  if (str.match(/^[\xc9-\xcf]+$/g) !== null) return str.charCodeAt(0) - 105
 
   return null
 }
@@ -156,13 +167,16 @@ const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
 const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
   if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
   if (str.match(/^[\x60-\x7e]+$/g) !== null) return str.charCodeAt(0) + 32
-  if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
+  if (str.match(/^[\x7f-\x7f\xc8-\xd3]+$/g) !== null)
+    return str.charCodeAt(0) + 105
 
   return null
 }
 
 const getIndexBasedOnStringAndCharacterSetC = (str: string) => {
-  if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
+  // Í-Ï
+  if (str.match(/^[\xcd-\xcf]+$/g) !== null) return str.charCodeAt(0) - 105
+  // \d
   if (str.match(/^\d+$/g) !== null) return Number(str)
 
   return null
@@ -208,8 +222,11 @@ const swapOrShift = (substring: string, set: string): number | null => {
       const isA = getIndexBasedOnStringAndCharacterSetA(substring[0])
       const isB = getIndexBasedOnStringAndCharacterSetB(substring[0])
 
-      if (isB !== null) return SWAP_BY_TYPE.B
-      if (isA !== null) return SWAP_BY_TYPE.A
+      if (isA !== null && totalOfMatchesSetA >= totalOfMatchesSetB)
+        return SWAP_BY_TYPE.A
+
+      if (isB !== null && totalOfMatchesSetB >= totalOfMatchesSetA)
+        return SWAP_BY_TYPE.B
 
       return null
     }
