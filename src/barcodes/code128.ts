@@ -147,24 +147,36 @@ const getBinaryByIndex = (index: number) => BINARIES[index]
 // https://www.codetable.net/unicodecharacters?page=1
 const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
   if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
-  else if (str.match(/^[\x00-\x1e]+$/g) !== null) return str.charCodeAt(0) + 64
-  else if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
-  // return shift B, Code C or Code B
+  if (str.match(/^[\x00-\x1e]+$/g) !== null) return str.charCodeAt(0) + 64
+  if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
+
+  // const isB = getIndexBasedOnStringAndCharacterSetB(str)
+  // if (isB !== null) return SWAP.SHIFT
+
   return null
 }
 
 const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
   if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
-  else if (str.match(/^[\x60-\x7e]+$/g) !== null) return str.charCodeAt(0) + 32
-  else if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
-  // return shift A, Code C or Code A
+  if (str.match(/^[\x60-\x7e]+$/g) !== null) return str.charCodeAt(0) + 32
+  if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
+
+  // const isA = getIndexBasedOnStringAndCharacterSetA(str)
+  // if (isA !== null) return SWAP.SHIFT
+
   return null
 }
 
 const getIndexBasedOnStringAndCharacterSetC = (str: string) => {
   if (str.match(/^[\xc8-\xd3]+$/g) !== null) return str.charCodeAt(0) + 105
   if (str.match(/^\d+$/g) !== null) return Number(str)
-  // return Code A or Code B
+
+  // const isA = getIndexBasedOnStringAndCharacterSetA(str)
+  // if (isA !== null) return SWAP.A
+
+  // const isB = getIndexBasedOnStringAndCharacterSetB(str)
+  // if (isB !== null) return SWAP.B
+
   return null
 }
 
@@ -181,11 +193,55 @@ const getIndexBasedOnStringAndCharacterSet = (str: string, set: string) => {
   }
 }
 
-const SWAP = {
+const swapOrShift = (substring: string, set: string): number | null => {
+  switch (set) {
+    case 'A': {
+      const totalOfMatchesSetB = 0
+      const totalOfMatchesSetA = 0
+
+      if (totalOfMatchesSetA > totalOfMatchesSetB) return SHIFT
+      if (totalOfMatchesSetB > totalOfMatchesSetA) return SWAP_BY_TYPE.B
+
+      return null
+    }
+    case 'B': {
+      const totalOfMatchesSetB = 0
+      const totalOfMatchesSetA = 0
+
+      if (totalOfMatchesSetA > totalOfMatchesSetB) return SWAP_BY_TYPE.A
+      if (totalOfMatchesSetB > totalOfMatchesSetA) return SHIFT
+
+      return null
+    }
+    case 'C': {
+      const totalOfMatchesSetB = 0
+      const totalOfMatchesSetA = 0
+
+      const isA = getIndexBasedOnStringAndCharacterSetA(substring[0])
+      const isB = getIndexBasedOnStringAndCharacterSetB(substring[0])
+
+      if (isB !== null) return SWAP_BY_TYPE.B
+      if (isA !== null) return SWAP_BY_TYPE.A
+
+      return null
+    }
+    default:
+      throw new Error('Invalid Set')
+  }
+}
+
+const SHIFT = 98
+
+const SWAP_BY_TYPE = {
   A: 101,
   B: 100,
   C: 99,
-  SHIFT: 98,
+}
+
+const SWAP_BY_VALUE = {
+  [SWAP_BY_TYPE.A]: 'A',
+  [SWAP_BY_TYPE.B]: 'B',
+  [SWAP_BY_TYPE.C]: 'C',
 }
 
 export class CODE128 implements IBarcode {
