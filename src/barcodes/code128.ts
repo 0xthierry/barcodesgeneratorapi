@@ -145,9 +145,9 @@ const BINARIES = [
 const getBinaryByIndex = (index: number) => BINARIES[index]
 
 // https://www.codetable.net/unicodecharacters?page=1
-// null-_ É-Ï
+// null-_ É-Ï - 0-99 & 201-207
 const CHAR_SET_A = '[\x00-\x5f\xc9-\xcf]'
-// space-del É-Ï
+// space-del É-Ï - 32-127 & 201-207
 const CHAR_SET_B = '[\x20-\x7f\xc9-\xcf]'
 // 00-99 FNC1
 const CHAR_SET_C = '(\xcf*[0-9]{2}\xcf*)'
@@ -165,10 +165,9 @@ const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
 }
 
 const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
-  if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
-  if (str.match(/^[\x60-\x7e]+$/g) !== null) return str.charCodeAt(0) + 32
-  if (str.match(/^[\x7f-\x7f\xc8-\xd3]+$/g) !== null)
-    return str.charCodeAt(0) + 105
+  // space - del
+  if (str.match(/^[\x20-\x7f]+$/g) !== null) return str.charCodeAt(0) - 32
+  if (str.match(/^[\xc9-\xcf]+$/g) !== null) return str.charCodeAt(0) - 105
 
   return null
 }
@@ -195,11 +194,32 @@ const getIndexBasedOnStringAndCharacterSet = (str: string, set: string) => {
   }
 }
 
+const getLongestMatchWithSetA = (substring: string) => {
+  return (substring.match(new RegExp(`^${CHAR_SET_A}*`)) as any[])[0].length
+}
+
+const getLongestMatchWithSetB = (substring: string) => {
+  return (substring.match(new RegExp(`^${CHAR_SET_B}*`)) as any[])[0].length
+}
+
+/**
+ * I need to think better about this algorithm
+ * I should build something like this
+ *  string
+ *    Which is the best set to start?
+ *      Within this set should I change the set?
+ *        It should be code or shift?
+ *          Where?
+ *            Concatenate the equivalent char
+ *
+ * ex: \tHi\nHI then it should return Ð\tHËi\nHI
+ *  SET_CHAR_A + \t + H + SHIFT B + i + \n + H + I
+ */
 const swapOrShift = (substring: string, set: string): number | null => {
   switch (set) {
     case 'A': {
-      const totalOfMatchesSetB = 0
-      const totalOfMatchesSetA = 0
+      const totalOfMatchesSetA = getLongestMatchWithSetA(substring.substring(1))
+      const totalOfMatchesSetB = getLongestMatchWithSetB(substring)
 
       if (totalOfMatchesSetA > totalOfMatchesSetB) return SHIFT
       if (totalOfMatchesSetB > totalOfMatchesSetA) return SWAP_BY_TYPE.B
@@ -207,8 +227,8 @@ const swapOrShift = (substring: string, set: string): number | null => {
       return null
     }
     case 'B': {
-      const totalOfMatchesSetB = 0
-      const totalOfMatchesSetA = 0
+      const totalOfMatchesSetA = getLongestMatchWithSetA(substring)
+      const totalOfMatchesSetB = getLongestMatchWithSetB(substring.substring(1))
 
       if (totalOfMatchesSetA > totalOfMatchesSetB) return SWAP_BY_TYPE.A
       if (totalOfMatchesSetB > totalOfMatchesSetA) return SHIFT
@@ -216,8 +236,8 @@ const swapOrShift = (substring: string, set: string): number | null => {
       return null
     }
     case 'C': {
-      const totalOfMatchesSetB = 0
-      const totalOfMatchesSetA = 0
+      const totalOfMatchesSetA = getLongestMatchWithSetA(substring)
+      const totalOfMatchesSetB = getLongestMatchWithSetB(substring)
 
       const isA = getIndexBasedOnStringAndCharacterSetA(substring[0])
       const isB = getIndexBasedOnStringAndCharacterSetB(substring[0])
@@ -269,7 +289,7 @@ export class CODE128 implements IBarcode {
 
   checksum() {
     const sum = this.text.split('').reduce((acc, n, idx) => {
-      const position = CHARACTER_SET_A.indexOf(n)
+      const position = 0
       return acc + position * (idx + 1)
     }, 0)
 
@@ -278,11 +298,11 @@ export class CODE128 implements IBarcode {
 
   encode() {
     const checksum = this.checksum()
-    console.log(CHARACTER_SET_A[checksum])
-    const checksumBarcode = ENCONDING_A[checksum]
+
+    const checksumBarcode = BINARIES[checksum]
     const digits = this.text.split('').reduce((acc, n) => {
-      const encondingIndex = CHARACTER_SET_A.indexOf(n)
-      const encode = ENCONDING_A[encondingIndex]
+      const encondingIndex = 0
+      const encode = BINARIES[encondingIndex]
       return acc.concat(encode)
     }, '')
 
