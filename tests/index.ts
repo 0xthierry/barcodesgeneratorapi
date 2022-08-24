@@ -6,6 +6,8 @@ import { EAN8 } from '../src/barcodes/ean8'
 import { EAN13 } from '../src/barcodes/ean13'
 import { ITF } from '../src/barcodes/itf'
 import { ITF14 } from '../src/barcodes/itf14'
+import { CODE128 } from '../src/barcodes/code128'
+import { CODE128C } from '../src/barcodes/code128c'
 
 // https://www.gtin.info/itf-14-barcodes/
 // https://www.barcodefaq.com/1d/interleaved-2of5/
@@ -43,3 +45,24 @@ assert.deepStrictEqual(
   itf14.encode().data,
   '1010100110101100101010010011011011010110010100110110010101001101010010011010110010110100110010010101101101',
 )
+
+const code128 = new CODE128('CSE370')
+assert.deepStrictEqual(code128.checksum(), 20)
+assert.deepStrictEqual(
+  code128.encode().data,
+  '11010000100100010001101101110100010001101000110010111001110110111010011101100110010011101100011101011',
+)
+
+const code128c = new CODE128C('0160000116030603')
+assert.deepStrictEqual(code128c.checksum(), 85)
+assert.deepStrictEqual(
+  code128c.encode().data,
+  '110100111001100110110011101111010110110011001100110110010011101100100100110001001100100010010011000100111100101100011101011',
+)
+
+/* const code128cWithFNC1 = new CODE128C('(01)60000116030603')
+assert.deepStrictEqual(code128c.checksum(), 85)
+assert.deepStrictEqual(
+  code128c.encode().data,
+  '110100111001100110110011101111010110110011001100110110010011101100100100110001001100100010010011000100111100101100011101011',
+) */
