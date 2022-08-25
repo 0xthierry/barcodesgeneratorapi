@@ -153,7 +153,7 @@ const CHAR_SET_B = '[\x20-\x7f\xc9-\xcf]'
 const CHAR_SET_C = '(\xcf*[0-9]{2}\xcf*)'
 
 // https://www.codetable.net/unicodecharacters?page=1
-const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
+export const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
   // space - _
   if (str.match(/^[\x20-\x5f]+$/g) !== null) return str.charCodeAt(0) - 32
   // null - US
@@ -164,7 +164,7 @@ const getIndexBasedOnStringAndCharacterSetA = (str: string) => {
   return null
 }
 
-const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
+export const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
   // space - del
   if (str.match(/^[\x20-\x7f]+$/g) !== null) return str.charCodeAt(0) - 32
   if (str.match(/^[\xc9-\xcf]+$/g) !== null) return str.charCodeAt(0) - 105
@@ -172,7 +172,7 @@ const getIndexBasedOnStringAndCharacterSetB = (str: string) => {
   return null
 }
 
-const getIndexBasedOnStringAndCharacterSetC = (str: string) => {
+export const getIndexBasedOnStringAndCharacterSetC = (str: string) => {
   // Í-Ï
   if (str.match(/^[\xcd-\xcf]+$/g) !== null) return str.charCodeAt(0) - 105
   // \d
