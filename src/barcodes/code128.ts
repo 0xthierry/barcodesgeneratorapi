@@ -6,9 +6,36 @@ const START_DIGITS_BY_CODES = {
   A: '11010000100',
   B: '11010010000',
   C: '11010011100',
-}
+} as const
+const START_DIGITS_BY_CHAR = {
+  A: 'Ð',
+  B: 'Ñ',
+  C: 'Ò',
+} as const
+
 const STOP_DIGITS = '1100011101011'
 const VALID_DATA_REGEX = /^[0-9]*/gi
+
+const SWAP_BY_TYPE = {
+  A: 101,
+  B: 100,
+  C: 99,
+} as const
+const SWAP_BY_CHAR = {
+  A: 'Î',
+  B: 'Í',
+  C: 'Ì',
+} as const
+const SHIFT = 98
+const SHIFT_CHAR = 'Ë'
+
+const SWAP_BY_VALUE = {
+  [SWAP_BY_TYPE.A]: 'A',
+  [SWAP_BY_TYPE.B]: 'B',
+  [SWAP_BY_TYPE.C]: 'C',
+}
+
+
 
 const BINARIES = [
   '11011001100',
@@ -215,6 +242,18 @@ const getLongestMatchWithSetB = (substring: string) => {
  * ex: \tHi\nHI then it should return Ð\tHËi\nHI
  *  SET_CHAR_A + \t + H + SHIFT B + i + \n + H + I
  */
+/**
+ * 
+ * @param value barcode data
+ * @param set forced start set
+ * @returns barcode data encoded with start set and shift/swap optmized
+ */
+const prepareInput =  (value: string, set?: "A"| "B" | "C") => {
+  const setChar = set && START_DIGITS_BY_CHAR[set] || START_DIGITS_BY_CHAR.A
+
+  return setChar.concat(value)
+}
+
 const swapOrShift = (substring: string, set: string): number | null => {
   switch (set) {
     case 'A': {
@@ -255,19 +294,6 @@ const swapOrShift = (substring: string, set: string): number | null => {
   }
 }
 
-const SHIFT = 98
-
-const SWAP_BY_TYPE = {
-  A: 101,
-  B: 100,
-  C: 99,
-}
-
-const SWAP_BY_VALUE = {
-  [SWAP_BY_TYPE.A]: 'A',
-  [SWAP_BY_TYPE.B]: 'B',
-  [SWAP_BY_TYPE.C]: 'C',
-}
 
 export class CODE128 implements IBarcode {
   text: string
