@@ -10,6 +10,7 @@ import {
   getIndexBasedOnStringAndCharacterSetA,
   getIndexBasedOnStringAndCharacterSetB,
   getIndexBasedOnStringAndCharacterSetC,
+  prepareInput,
 } from '../src/barcodes/code128'
 import { CODE128C } from '../src/barcodes/code128c'
 
@@ -391,3 +392,12 @@ assert.deepStrictEqual(
     getIndexBasedOnStringAndCharacterSetC(char),
   ]),
 )
+
+// from char set A using shift
+assert.deepStrictEqual(prepareInput('\tHi\nHI', 'A'), '\tHËi\nHI')
+// from char set A using CODE B and moving back to char set A
+assert.deepStrictEqual(prepareInput('\tHii\nHI', 'A'), '\tHÍiiÎ\nHI')
+// from char set B using shift
+assert.deepStrictEqual(prepareInput('iiiiii\nii', 'B'), 'iiiiiiË\nii')
+// from char set B using CODE A and moving back to char set B
+assert.deepStrictEqual(prepareInput('iiiiii\n\nii', 'B'), 'iiiiiiÎ\n\nÍii')

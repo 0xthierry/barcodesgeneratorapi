@@ -35,8 +35,6 @@ const SWAP_BY_VALUE = {
   [SWAP_BY_TYPE.C]: 'C',
 }
 
-
-
 const BINARIES = [
   '11011001100',
   '11001101100',
@@ -221,11 +219,11 @@ const getIndexBasedOnStringAndCharacterSet = (str: string, set: string) => {
   }
 }
 
-const getLongestMatchWithSetA = (substring: string) => {
+const getLongestMatchWithSetA = (substring: string): number => {
   return (substring.match(new RegExp(`^${CHAR_SET_A}*`)) as any[])[0].length
 }
 
-const getLongestMatchWithSetB = (substring: string) => {
+const getLongestMatchWithSetB = (substring: string): number => {
   return (substring.match(new RegExp(`^${CHAR_SET_B}*`)) as any[])[0].length
 }
 
@@ -243,18 +241,91 @@ const getLongestMatchWithSetB = (substring: string) => {
  *  SET_CHAR_A + \t + H + SHIFT B + i + \n + H + I
  */
 /**
- * 
+ *
  * @param value barcode data
  * @param set forced start set
  * @returns barcode data encoded with start set and shift/swap optmized
  */
-const prepareInput =  (value: string, set?: "A"| "B" | "C") => {
-  const setChar = set && START_DIGITS_BY_CHAR[set] || START_DIGITS_BY_CHAR.A
+export const prepareInput = (value: string, set?: 'A' | 'B' | 'C') => {
+  const setChar =
+    (set !== undefined && START_DIGITS_BY_CHAR[set]) || START_DIGITS_BY_CHAR.A
 
-  return setChar.concat(value)
+  let preparedInput = ''
+
+  switch (setChar) {
+    case START_DIGITS_BY_CHAR.A: {
+      for (let index = 0; index < value.length; ) {
+        const longestMatchA = getLongestMatchWithSetA(value.substring(index))
+        if (longestMatchA === 0) {
+          const longestMatchB = getLongestMatchWithSetB(value.substring(index))
+          if (longestMatchB > 0) {
+            if (longestMatchB > 1) {
+              preparedInput = preparedInput.concat(
+                String.fromCharCode(205),
+                prepareInput(value.substring(index), 'B'),
+              )
+              index += longestMatchB
+              break
+            } else {
+              preparedInput = preparedInput.concat(
+                SHIFT_CHAR,
+                value.substring(index, index + longestMatchB),
+              )
+              index += longestMatchB
+            }
+          }
+        } else {
+          preparedInput = preparedInput.concat(
+            value.substring(index, index + longestMatchA),
+          )
+          index += longestMatchA
+        }
+      }
+      break
+    }
+    case START_DIGITS_BY_CHAR.B: {
+      for (let index = 0; index < value.length; ) {
+        const longestMatchB = getLongestMatchWithSetB(value.substring(index))
+        if (longestMatchB === 0) {
+          const longestMatchA = getLongestMatchWithSetA(value.substring(index))
+          if (longestMatchA > 0) {
+            if (longestMatchA > 1) {
+              preparedInput = preparedInput.concat(
+                String.fromCharCode(206),
+                prepareInput(value.substring(index), 'A'),
+              )
+              index += longestMatchA
+              break
+            } else {
+              preparedInput = preparedInput.concat(
+                SHIFT_CHAR,
+                value.substring(index, index + longestMatchA),
+              )
+              index += longestMatchA
+            }
+          }
+        } else {
+          preparedInput = preparedInput.concat(
+            value.substring(index, index + longestMatchB),
+          )
+          index += longestMatchB
+        }
+      }
+      break
+    }
+    case START_DIGITS_BY_CHAR.C: {
+      preparedInput = ''
+      break
+    }
+    default: {
+      throw new Error('Invalid Set')
+    }
+  }
+
+  return preparedInput
 }
 
-const swapOrShift = (substring: string, set: string): number | null => {
+/* const swapOrShift = (substring: string, set: string): number | null => {
   switch (set) {
     case 'A': {
       const totalOfMatchesSetA = getLongestMatchWithSetA(substring.substring(1))
@@ -293,8 +364,7 @@ const swapOrShift = (substring: string, set: string): number | null => {
       throw new Error('Invalid Set')
   }
 }
-
-
+ */
 export class CODE128 implements IBarcode {
   text: string
   data: string
