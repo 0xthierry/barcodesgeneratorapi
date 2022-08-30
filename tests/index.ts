@@ -394,10 +394,26 @@ assert.deepStrictEqual(
 )
 
 // from char set A using shift
-assert.deepStrictEqual(prepareInput('\tHi\nHI', 'A'), '\tHËi\nHI')
+assert.deepStrictEqual(prepareInput('\tHi\nHI', 'A'), 'Ð\tHËi\nHI')
 // from char set A using CODE B and moving back to char set A
-assert.deepStrictEqual(prepareInput('\tHii\nHI', 'A'), '\tHÍiiÎ\nHI')
+assert.deepStrictEqual(prepareInput('\tHii\nHI', 'A'), 'Ð\tHÍiiÎ\nHI')
+assert.deepStrictEqual(prepareInput('\tHii\nHI'), 'Ð\tHÍiiÎ\nHI')
+// from char set A using CODE B and moving back to char set A and then to char set C
+assert.deepStrictEqual(prepareInput('\tHii\nHI1234', 'A'), 'Ð\tHÍiiÎ\nHIÌ1234')
+assert.deepStrictEqual(
+  prepareInput('\tHii\nHI123456A', 'A'),
+  'Ð\tHÍiiÎ\nHIÌ123456ÎA',
+)
 // from char set B using shift
-assert.deepStrictEqual(prepareInput('iiiiii\nii', 'B'), 'iiiiiiË\nii')
+assert.deepStrictEqual(prepareInput('iiiiii\nii', 'B'), 'ÑiiiiiiË\nii')
 // from char set B using CODE A and moving back to char set B
-assert.deepStrictEqual(prepareInput('iiiiii\n\nii', 'B'), 'iiiiiiÎ\n\nÍii')
+assert.deepStrictEqual(prepareInput('iiiiii\n\nii', 'B'), 'ÑiiiiiiÎ\n\nÍii')
+assert.deepStrictEqual(
+  prepareInput('555555iiiiii\n\nii'),
+  'Ò555555ÍiiiiiiÎ\n\nÍii',
+)
+
+// A1234BC - A 1 2 3 4 5 6 B C
+// A1234BC - A C 12 34 56 A B C
+// A123425BC - A I 12 34 25 A B C
+// 12BC - 12 A B C

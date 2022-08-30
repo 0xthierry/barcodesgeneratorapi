@@ -1,3 +1,6 @@
+/* eslint-disable no-unreachable-loop */
+/* eslint-disable no-unreachable */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-control-regex */
 import { RegexError } from '../errors'
 import { IBarcode } from './IBarcode'
@@ -227,6 +230,10 @@ const getLongestMatchWithSetB = (substring: string): number => {
   return (substring.match(new RegExp(`^${CHAR_SET_B}*`)) as any[])[0].length
 }
 
+const getLongestMatchWithSetC = (substring: string): number => {
+  return (substring.match(new RegExp(`^${CHAR_SET_C}*`)) as any[])[0].length
+}
+
 /**
  * I need to think better about this algorithm
  * I should build something like this
@@ -246,15 +253,179 @@ const getLongestMatchWithSetB = (substring: string): number => {
  * @param set forced start set
  * @returns barcode data encoded with start set and shift/swap optmized
  */
-export const prepareInput = (value: string, set?: 'A' | 'B' | 'C') => {
+export const prepareInput = (originalString: string, set?: 'A' | 'B' | 'C') => {
+  const bestStartCode = () => {
+    const longestMatchA = getLongestMatchWithSetA(originalString)
+    const longestMatchB = getLongestMatchWithSetB(originalString)
+    const longestMatchC = getLongestMatchWithSetC(originalString)
+
+    if (longestMatchC >= 4) {
+      return START_DIGITS_BY_CHAR.C
+    } else if (longestMatchA >= longestMatchB) {
+      return START_DIGITS_BY_CHAR.A
+    } else {
+      return START_DIGITS_BY_CHAR.B
+    }
+  }
+
+  let currentCharSet =
+    (set !== undefined && START_DIGITS_BY_CHAR[set]) || bestStartCode()
+  const initialStartCode = currentCharSet
+  let encodedString = ''
+  let index = 0
+
+  while (index < originalString.length) {
+    const slicedOriginalString = originalString.substring(index)
+
+    switch (currentCharSet) {
+      case START_DIGITS_BY_CHAR.A: {
+        const lengthOfC = getLongestMatchWithSetC(slicedOriginalString)
+
+        if (
+          index > 0 &&
+          (lengthOfC >= 6 ||
+            (lengthOfC >= 4 && slicedOriginalString.length === lengthOfC))
+        ) {
+          encodedString += SWAP_BY_CHAR.C
+          currentCharSet = START_DIGITS_BY_CHAR.C
+          continue
+        }
+
+        const char = originalString[index]
+
+        if (getIndexBasedOnStringAndCharacterSetA(char) === null) {
+          const longestMatchB = getLongestMatchWithSetB(
+            originalString.substring(index),
+          )
+          if (longestMatchB > 1) {
+            encodedString += SWAP_BY_CHAR.B
+            currentCharSet = START_DIGITS_BY_CHAR.B
+          } else if (longestMatchB === 1) {
+            encodedString += SHIFT_CHAR
+            encodedString += char
+            index++
+          } else {
+            encodedString += char
+            index++
+          }
+        } else {
+          encodedString += char
+          index++
+        }
+        break
+      }
+      case START_DIGITS_BY_CHAR.B: {
+        const lengthOfC = getLongestMatchWithSetC(slicedOriginalString)
+
+        if (
+          index > 0 &&
+          (lengthOfC >= 6 ||
+            (lengthOfC >= 4 && slicedOriginalString.length === lengthOfC))
+        ) {
+          encodedString += SWAP_BY_CHAR.C
+          currentCharSet = START_DIGITS_BY_CHAR.C
+          continue
+        }
+
+        const char = originalString[index]
+        if (getIndexBasedOnStringAndCharacterSetB(char) === null) {
+          const longestMatchA = getLongestMatchWithSetA(
+            originalString.substring(index),
+          )
+
+          if (longestMatchA > 1) {
+            encodedString += SWAP_BY_CHAR.A
+            currentCharSet = START_DIGITS_BY_CHAR.A
+          } else if (longestMatchA === 1) {
+            encodedString += SHIFT_CHAR
+            encodedString += char
+            index++
+          } else {
+            encodedString += char
+            index++
+          }
+        } else {
+          encodedString += char
+          index++
+        }
+        break
+      }
+      case START_DIGITS_BY_CHAR.C: {
+        const pairs = slicedOriginalString.match(/(..?)/gm) as []
+
+        for (let pi = 0; pi < pairs.length; pi++) {
+          const char = String(pairs[pi])
+
+          if (getIndexBasedOnStringAndCharacterSetC(char) === null) {
+            const longestMatchA = getLongestMatchWithSetA(slicedOriginalString)
+            const longestMatchB = getLongestMatchWithSetB(slicedOriginalString)
+
+            if (longestMatchA >= longestMatchB) {
+              encodedString += SWAP_BY_CHAR.A
+              currentCharSet = START_DIGITS_BY_CHAR.A
+            } else {
+              encodedString += SWAP_BY_CHAR.B
+              currentCharSet = START_DIGITS_BY_CHAR.B
+            }
+            break
+          } else {
+            encodedString += char
+            index += 2
+          }
+        }
+        break
+      }
+      default: {
+        throw new Error('Invalid Set')
+      }
+    }
+  }
+
+  return initialStartCode.concat(encodedString)
+}
+
+/* export const prepareInput = (value: string, set?: 'A' | 'B' | 'C') => {
   const setChar =
     (set !== undefined && START_DIGITS_BY_CHAR[set]) || START_DIGITS_BY_CHAR.A
 
   let preparedInput = ''
+  // beginning of data it will be defined outside
 
   switch (setChar) {
     case START_DIGITS_BY_CHAR.A: {
       for (let index = 0; index < value.length; ) {
+        const longestMatchC =
+          (value.substring(index).match(new RegExp(`${CHAR_SET_C}`))?.length ||
+            0) * 2
+        if (longestMatchC > 0) {
+          if (index > 0 && longestMatchC >= 6) {
+            preparedInput = preparedInput.concat(
+              String.fromCharCode(204),
+              prepareInput(value.substring(index), 'C'),
+            )
+            index += longestMatchC
+            break
+          }
+          console.log({
+            index,
+            longestMatchC,
+            length: value.substring(index).length,
+            value: value.substring(index),
+          })
+          if (
+            index > 0 &&
+            longestMatchC >= 4 &&
+            value.substring(index).length === longestMatchC
+          ) {
+            preparedInput = preparedInput.concat(
+              String.fromCharCode(204),
+              prepareInput(value.substring(index), 'C'),
+            )
+            index += longestMatchC
+            break
+          }
+        }
+
         const longestMatchA = getLongestMatchWithSetA(value.substring(index))
         if (longestMatchA === 0) {
           const longestMatchB = getLongestMatchWithSetB(value.substring(index))
@@ -314,16 +485,16 @@ export const prepareInput = (value: string, set?: 'A' | 'B' | 'C') => {
       break
     }
     case START_DIGITS_BY_CHAR.C: {
-      preparedInput = ''
+      console.log({ value })
       break
     }
     default: {
       throw new Error('Invalid Set')
     }
-  }
+  } 
 
   return preparedInput
-}
+} */
 
 /* const swapOrShift = (substring: string, set: string): number | null => {
   switch (set) {
