@@ -270,6 +270,7 @@ export const prepareInput = (originalString: string, set?: 'A' | 'B' | 'C') => {
 
   let currentCharSet =
     (set !== undefined && START_DIGITS_BY_CHAR[set]) || bestStartCode()
+
   const initialStartCode = currentCharSet
   let encodedString = ''
   let index = 0
@@ -384,158 +385,46 @@ export const prepareInput = (originalString: string, set?: 'A' | 'B' | 'C') => {
   return initialStartCode.concat(encodedString)
 }
 
-/* export const prepareInput = (value: string, set?: 'A' | 'B' | 'C') => {
-  const setChar =
-    (set !== undefined && START_DIGITS_BY_CHAR[set]) || START_DIGITS_BY_CHAR.A
+export const charsToBarcode = (value: string) => {
+  let currentCharSet = ''
+  let barcode = ''
 
-  let preparedInput = ''
-  // beginning of data it will be defined outside
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index]
 
-  switch (setChar) {
-    case START_DIGITS_BY_CHAR.A: {
-      for (let index = 0; index < value.length; ) {
-        const longestMatchC =
-          (value.substring(index).match(new RegExp(`${CHAR_SET_C}`))?.length ||
-            0) * 2
-        if (longestMatchC > 0) {
-          if (index > 0 && longestMatchC >= 6) {
-            preparedInput = preparedInput.concat(
-              String.fromCharCode(204),
-              prepareInput(value.substring(index), 'C'),
-            )
-            index += longestMatchC
-            break
-          }
-          console.log({
-            index,
-            longestMatchC,
-            length: value.substring(index).length,
-            value: value.substring(index),
-          })
-          if (
-            index > 0 &&
-            longestMatchC >= 4 &&
-            value.substring(index).length === longestMatchC
-          ) {
-            preparedInput = preparedInput.concat(
-              String.fromCharCode(204),
-              prepareInput(value.substring(index), 'C'),
-            )
-            index += longestMatchC
-            break
-          }
-        }
-
-        const longestMatchA = getLongestMatchWithSetA(value.substring(index))
-        if (longestMatchA === 0) {
-          const longestMatchB = getLongestMatchWithSetB(value.substring(index))
-          if (longestMatchB > 0) {
-            if (longestMatchB > 1) {
-              preparedInput = preparedInput.concat(
-                String.fromCharCode(205),
-                prepareInput(value.substring(index), 'B'),
-              )
-              index += longestMatchB
-              break
-            } else {
-              preparedInput = preparedInput.concat(
-                SHIFT_CHAR,
-                value.substring(index, index + longestMatchB),
-              )
-              index += longestMatchB
-            }
-          }
-        } else {
-          preparedInput = preparedInput.concat(
-            value.substring(index, index + longestMatchA),
-          )
-          index += longestMatchA
-        }
-      }
-      break
+    if (char === START_DIGITS_BY_CHAR.A || char === SWAP_BY_CHAR.A) {
+      currentCharSet = 'A'
+      barcode += START_DIGITS_BY_CODES.A
+      continue
+    } else if (char === START_DIGITS_BY_CHAR.B || char === SWAP_BY_CHAR.B) {
+      currentCharSet = 'B'
+      barcode += START_DIGITS_BY_CODES.B
+      continue
+    } else if (char === START_DIGITS_BY_CHAR.C || char === SWAP_BY_CHAR.C) {
+      currentCharSet = 'C'
+      barcode += START_DIGITS_BY_CODES.C
+      continue
+    } else if (char === SHIFT_CHAR) {
+      const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
+        value[++index],
+        currentCharSet === 'A' ? 'B' : 'A',
+      ) as number
+      barcode += getBinaryByIndex(SHIFT)
+      barcode += getBinaryByIndex(barcodeIdx)
+      continue
     }
-    case START_DIGITS_BY_CHAR.B: {
-      for (let index = 0; index < value.length; ) {
-        const longestMatchB = getLongestMatchWithSetB(value.substring(index))
-        if (longestMatchB === 0) {
-          const longestMatchA = getLongestMatchWithSetA(value.substring(index))
-          if (longestMatchA > 0) {
-            if (longestMatchA > 1) {
-              preparedInput = preparedInput.concat(
-                String.fromCharCode(206),
-                prepareInput(value.substring(index), 'A'),
-              )
-              index += longestMatchA
-              break
-            } else {
-              preparedInput = preparedInput.concat(
-                SHIFT_CHAR,
-                value.substring(index, index + longestMatchA),
-              )
-              index += longestMatchA
-            }
-          }
-        } else {
-          preparedInput = preparedInput.concat(
-            value.substring(index, index + longestMatchB),
-          )
-          index += longestMatchB
-        }
-      }
-      break
-    }
-    case START_DIGITS_BY_CHAR.C: {
-      console.log({ value })
-      break
-    }
-    default: {
-      throw new Error('Invalid Set')
-    }
-  } 
+    console.log({ char, currentCharSet })
+    const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
+      char,
+      currentCharSet,
+    ) as number
 
-  return preparedInput
-} */
-
-/* const swapOrShift = (substring: string, set: string): number | null => {
-  switch (set) {
-    case 'A': {
-      const totalOfMatchesSetA = getLongestMatchWithSetA(substring.substring(1))
-      const totalOfMatchesSetB = getLongestMatchWithSetB(substring)
-
-      if (totalOfMatchesSetA > totalOfMatchesSetB) return SHIFT
-      if (totalOfMatchesSetB > totalOfMatchesSetA) return SWAP_BY_TYPE.B
-
-      return null
-    }
-    case 'B': {
-      const totalOfMatchesSetA = getLongestMatchWithSetA(substring)
-      const totalOfMatchesSetB = getLongestMatchWithSetB(substring.substring(1))
-
-      if (totalOfMatchesSetA > totalOfMatchesSetB) return SWAP_BY_TYPE.A
-      if (totalOfMatchesSetB > totalOfMatchesSetA) return SHIFT
-
-      return null
-    }
-    case 'C': {
-      const totalOfMatchesSetA = getLongestMatchWithSetA(substring)
-      const totalOfMatchesSetB = getLongestMatchWithSetB(substring)
-
-      const isA = getIndexBasedOnStringAndCharacterSetA(substring[0])
-      const isB = getIndexBasedOnStringAndCharacterSetB(substring[0])
-
-      if (isA !== null && totalOfMatchesSetA >= totalOfMatchesSetB)
-        return SWAP_BY_TYPE.A
-
-      if (isB !== null && totalOfMatchesSetB >= totalOfMatchesSetA)
-        return SWAP_BY_TYPE.B
-
-      return null
-    }
-    default:
-      throw new Error('Invalid Set')
+    barcode += getBinaryByIndex(barcodeIdx)
   }
+
+  return barcode
 }
- */
+
 export class CODE128 implements IBarcode {
   text: string
   data: string

@@ -7,6 +7,7 @@ import { EAN13 } from '../src/barcodes/ean13'
 import { ITF } from '../src/barcodes/itf'
 import { ITF14 } from '../src/barcodes/itf14'
 import {
+  charsToBarcode,
   getIndexBasedOnStringAndCharacterSetA,
   getIndexBasedOnStringAndCharacterSetB,
   getIndexBasedOnStringAndCharacterSetC,
@@ -412,6 +413,7 @@ assert.deepStrictEqual(
   prepareInput('555555iiiiii\n\nii'),
   'Ò555555ÍiiiiiiÎ\n\nÍii',
 )
+assert.deepStrictEqual(charsToBarcode('Ò55'), '1101001110011101000110')
 
 // A1234BC - A 1 2 3 4 5 6 B C
 // A1234BC - A C 12 34 56 A B C
