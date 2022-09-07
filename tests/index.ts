@@ -6,14 +6,10 @@ import { EAN8 } from '../src/barcodes/ean8'
 import { EAN13 } from '../src/barcodes/ean13'
 import { ITF } from '../src/barcodes/itf'
 import { ITF14 } from '../src/barcodes/itf14'
-import {
-  charsToBarcode,
-  getIndexBasedOnStringAndCharacterSetA,
-  getIndexBasedOnStringAndCharacterSetB,
-  getIndexBasedOnStringAndCharacterSetC,
-  prepareInput,
-} from '../src/barcodes/code128'
-import { CODE128C } from '../src/barcodes/code128c'
+import { charsToBarcode, prepareInput } from '../src/barcodes/code128'
+import { getIndexBasedOnStringAndCharacterSetA } from '../src/barcodes/code128/setA'
+import { getIndexBasedOnStringAndCharacterSetB } from '../src/barcodes/code128/setB'
+import { getIndexBasedOnStringAndCharacterSetC } from '../src/barcodes/code128/setC'
 
 // https://www.gtin.info/itf-14-barcodes/
 // https://www.barcodefaq.com/1d/interleaved-2of5/
