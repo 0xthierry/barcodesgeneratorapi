@@ -1,54 +1,20 @@
-import express, { Router } from 'express'
-import { EAN13 } from './barcodes/ean13'
-import { EAN2 } from './barcodes/ean2'
-import { EAN5 } from './barcodes/ean5'
-import { EAN8 } from './barcodes/ean8'
-import { ITF } from './barcodes/itf'
-import { ITF14 } from './barcodes/itf14'
-import { ImageGenerator, ImageGeneratorTypes } from './image-generator'
+import express from 'express'
+import 'express-async-errors'
+import cors from 'cors'
+import helmet from 'helmet'
+import { errors } from 'celebrate'
+import { loggerMiddleware } from './middlewares/logger-middleware'
+import { errorHandlerMiddleware } from './middlewares/error-middleware'
+import { routes } from './routes'
 
 const app = express()
-const routes = Router()
 
-const barcodeTypes = {
-  ean2: EAN2,
-  ean5: EAN5,
-  ean8: EAN8,
-  ean13: EAN13,
-  itf: ITF,
-  itf14: ITF14,
-} as const
-
-routes.get('/barcode', (req, res) => {
-  const type = req.query.type
-  const code = req.query.code
-  const returnType = req.query.return_type
-
-  // @ts-expect-error
-  const Barcode = barcodeTypes[type as string]
-
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (!Barcode) {
-    return res.status(422).json({
-      message: 'Invalid barcode type',
-    })
-  }
-
-  const barcode = new Barcode(code)
-  const imageGenerator = new ImageGenerator(
-    barcode.encode().data,
-    returnType === 'png' ? ImageGeneratorTypes.PNG : ImageGeneratorTypes.JPEG,
-  )
-  const img = Buffer.from(imageGenerator.create())
-
-  res.writeHead(200, {
-    'Content-Type': returnType === 'png' ? 'image/png' : 'image/jpeg',
-    'Content-Length': img.length,
-  })
-
-  res.end(img)
-})
-
+app.use(express.json())
+app.use(loggerMiddleware)
+app.use(cors())
+app.use(helmet())
 app.use('/api/v1', routes)
+app.use(errors({ statusCode: 422 }))
+app.use(errorHandlerMiddleware)
 
 export { app }
