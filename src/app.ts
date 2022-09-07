@@ -1,5 +1,4 @@
 import express, { Router } from 'express'
-import { CODE128C } from './barcodes/code128c'
 import { EAN13 } from './barcodes/ean13'
 import { EAN2 } from './barcodes/ean2'
 import { EAN5 } from './barcodes/ean5'
@@ -18,7 +17,6 @@ const barcodeTypes = {
   ean13: EAN13,
   itf: ITF,
   itf14: ITF14,
-  code128c: CODE128C,
 } as const
 
 routes.get('/barcode', (req, res) => {

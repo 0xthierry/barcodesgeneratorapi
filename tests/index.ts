@@ -6,7 +6,7 @@ import { EAN8 } from '../src/barcodes/ean8'
 import { EAN13 } from '../src/barcodes/ean13'
 import { ITF } from '../src/barcodes/itf'
 import { ITF14 } from '../src/barcodes/itf14'
-import { charsToBarcode, prepareInput } from '../src/barcodes/code128'
+import { charsToBarcode, CODE128, prepareInput } from '../src/barcodes/code128'
 import { getIndexBasedOnStringAndCharacterSetA } from '../src/barcodes/code128/setA'
 import { getIndexBasedOnStringAndCharacterSetB } from '../src/barcodes/code128/setB'
 import { getIndexBasedOnStringAndCharacterSetC } from '../src/barcodes/code128/setC'
@@ -425,3 +425,32 @@ assert.deepStrictEqual(
   charsToBarcode('Ð55'),
   '110100001001101110010011011100100',
 )
+
+const d55 = new CODE128('55')
+
+assert.deepStrictEqual(d55.encode(), {
+  checksum: '2',
+  data: '110100001001101110010011011100100110011001101100011101011',
+  text: '55',
+})
+
+const fromCodeAWithShiftB = new CODE128('\tHi\nHI')
+/**
+ * 'Ð\tHËi\nHI'
+ * Ð - 103 * 1 = 103
+ * \t - 73 * 2 = 146
+ * H - 40 * 3 = 120
+ * Ë - 98 * 4 = 392
+ * i - 73 * 5 = 365
+ * \n - 74 * 6 = 444
+ * H - 40 * 7 = 280
+ * I - 41 * 8 = 328
+ * sum = 2178
+ * mod = 2178 % 103 = 15 = checksum
+ */
+assert.deepStrictEqual(fromCodeAWithShiftB.encode(), {
+  checksum: '15',
+  data: '1101000010010000110100110001010001111010001010000110100100001100101100010100011000100010101110011001100011101011',
+  /// //'1101000010010000110100110001010001111010001010000110100100001100101100010100011000100010101110011001100011101011'
+  text: '\tHi\nHI',
+})
