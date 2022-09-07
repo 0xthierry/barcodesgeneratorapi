@@ -15,7 +15,7 @@ const START_DIGITS_BY_CHAR = {
   B: 'Ñ',
   C: 'Ò',
 } as const
-
+const STOP_CHAR = 'Ó'
 const STOP_DIGITS = '1100011101011'
 const VALID_DATA_REGEX = /^[0-9]*/gi
 
@@ -31,12 +31,6 @@ const SWAP_BY_CHAR = {
 } as const
 const SHIFT = 98
 const SHIFT_CHAR = 'Ë'
-
-const SWAP_BY_VALUE = {
-  [SWAP_BY_TYPE.A]: 'A',
-  [SWAP_BY_TYPE.B]: 'B',
-  [SWAP_BY_TYPE.C]: 'C',
-}
 
 const BINARIES = [
   '11011001100',
@@ -234,25 +228,6 @@ const getLongestMatchWithSetC = (substring: string): number => {
   return (substring.match(new RegExp(`^${CHAR_SET_C}*`)) as any[])[0].length
 }
 
-/**
- * I need to think better about this algorithm
- * I should build something like this
- *  string
- *    Which is the best set to start?
- *      Within this set should I change the set?
- *        It should be code or shift?
- *          Where?
- *            Concatenate the equivalent char
- *
- * ex: \tHi\nHI then it should return Ð\tHËi\nHI
- *  SET_CHAR_A + \t + H + SHIFT B + i + \n + H + I
- */
-/**
- *
- * @param value barcode data
- * @param set forced start set
- * @returns barcode data encoded with start set and shift/swap optmized
- */
 export const prepareInput = (originalString: string, set?: 'A' | 'B' | 'C') => {
   const bestStartCode = () => {
     const longestMatchA = getLongestMatchWithSetA(originalString)
@@ -392,17 +367,29 @@ export const charsToBarcode = (value: string) => {
   for (let index = 0; index < value.length; index++) {
     const char = value[index]
 
-    if (char === START_DIGITS_BY_CHAR.A || char === SWAP_BY_CHAR.A) {
+    if (char === START_DIGITS_BY_CHAR.A) {
       currentCharSet = 'A'
       barcode += START_DIGITS_BY_CODES.A
       continue
-    } else if (char === START_DIGITS_BY_CHAR.B || char === SWAP_BY_CHAR.B) {
+    } else if (char === START_DIGITS_BY_CHAR.B) {
       currentCharSet = 'B'
       barcode += START_DIGITS_BY_CODES.B
       continue
-    } else if (char === START_DIGITS_BY_CHAR.C || char === SWAP_BY_CHAR.C) {
+    } else if (char === START_DIGITS_BY_CHAR.C) {
       currentCharSet = 'C'
       barcode += START_DIGITS_BY_CODES.C
+      continue
+    } else if (char === SWAP_BY_CHAR.A) {
+      currentCharSet = 'A'
+      barcode += getBinaryByIndex(SWAP_BY_TYPE.A)
+      continue
+    } else if (char === SWAP_BY_CHAR.B) {
+      currentCharSet = 'B'
+      barcode += getBinaryByIndex(SWAP_BY_TYPE.B)
+      continue
+    } else if (char === SWAP_BY_CHAR.C) {
+      currentCharSet = 'C'
+      barcode += getBinaryByIndex(SWAP_BY_TYPE.C)
       continue
     } else if (char === SHIFT_CHAR) {
       const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
@@ -413,13 +400,22 @@ export const charsToBarcode = (value: string) => {
       barcode += getBinaryByIndex(barcodeIdx)
       continue
     }
-    console.log({ char, currentCharSet })
+
+    const pValue =
+      currentCharSet === 'C'
+        ? (value.substring(index).match(/(..?)/gm) as any[])[0] || value[index]
+        : value[index]
+
     const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
-      char,
+      pValue,
       currentCharSet,
     ) as number
 
     barcode += getBinaryByIndex(barcodeIdx)
+
+    if (currentCharSet === 'C') {
+      index++
+    }
   }
 
   return barcode

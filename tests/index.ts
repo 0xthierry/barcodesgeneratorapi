@@ -394,28 +394,38 @@ assert.deepStrictEqual(
   ]),
 )
 
-// from char set A using shift
 assert.deepStrictEqual(prepareInput('\tHi\nHI', 'A'), 'Ð\tHËi\nHI')
-// from char set A using CODE B and moving back to char set A
 assert.deepStrictEqual(prepareInput('\tHii\nHI', 'A'), 'Ð\tHÍiiÎ\nHI')
 assert.deepStrictEqual(prepareInput('\tHii\nHI'), 'Ð\tHÍiiÎ\nHI')
-// from char set A using CODE B and moving back to char set A and then to char set C
 assert.deepStrictEqual(prepareInput('\tHii\nHI1234', 'A'), 'Ð\tHÍiiÎ\nHIÌ1234')
 assert.deepStrictEqual(
   prepareInput('\tHii\nHI123456A', 'A'),
   'Ð\tHÍiiÎ\nHIÌ123456ÎA',
 )
-// from char set B using shift
 assert.deepStrictEqual(prepareInput('iiiiii\nii', 'B'), 'ÑiiiiiiË\nii')
-// from char set B using CODE A and moving back to char set B
 assert.deepStrictEqual(prepareInput('iiiiii\n\nii', 'B'), 'ÑiiiiiiÎ\n\nÍii')
 assert.deepStrictEqual(
   prepareInput('555555iiiiii\n\nii'),
   'Ò555555ÍiiiiiiÎ\n\nÍii',
 )
 assert.deepStrictEqual(charsToBarcode('Ò55'), '1101001110011101000110')
-
-// A1234BC - A 1 2 3 4 5 6 B C
-// A1234BC - A C 12 34 56 A B C
-// A123425BC - A I 12 34 25 A B C
-// 12BC - 12 A B C
+assert.deepStrictEqual(
+  charsToBarcode('Ð55'),
+  '110100001001101110010011011100100',
+)
+assert.deepStrictEqual(
+  charsToBarcode('Ò555555ÍiiiiiiÎ\n\nÍii'),
+  '1101001110011101000110111010001101110100011010111101110100001101001000011010010000110100100001101001000011010010000110100111010111101000011001010000110010101111011101000011010010000110100',
+)
+assert.deepStrictEqual(
+  charsToBarcode('ÑiiiiiiÎ\n\nÍii'),
+  '11010010000100001101001000011010010000110100100001101001000011010010000110100111010111101000011001010000110010101111011101000011010010000110100',
+)
+assert.deepStrictEqual(
+  charsToBarcode('Ð\tHÍiiÎ\nHIÌ123456ÎA'),
+  '11010000100100001101001100010100010111101110100001101001000011010011101011110100001100101100010100011000100010101110111101011001110010001011000111000101101110101111010100011000',
+)
+assert.deepStrictEqual(
+  charsToBarcode('Ð55'),
+  '110100001001101110010011011100100',
+)
