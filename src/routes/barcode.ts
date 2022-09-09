@@ -11,9 +11,7 @@ import { CODE128 } from '../barcodes/code128'
 import { CODE128A } from '../barcodes/code128/code128A'
 import { CODE128B } from '../barcodes/code128/code128B'
 import { CODE128C } from '../barcodes/code128/code128C'
-import { logger as loggerBuilder } from '../logger'
 
-const logger = loggerBuilder('BARCODE-API')
 export const barcodeRoutes = Router()
 
 const barcodeTypes = {
@@ -45,25 +43,22 @@ const schema = celebrate({
 
 barcodeRoutes.get('/', schema, (req, res) => {
   const barcodeType = req.query.barcode_type as keyof typeof barcodeTypes
-  const text = req.query.text as string
+  const text = decodeURIComponent(req.query.text as string)
   const returnType = req.query.return_type
 
   const Barcode = barcodeTypes[barcodeType]
-  const barcode = new Barcode(decodeURIComponent(text))
+  const barcodeTarget = new Barcode(text)
+  const barcode = barcodeTarget.encode()
 
-  logger.info({
-    decodeURI: decodeURIComponent(text),
-    text,
-    data: barcode.encode().data,
-  })
   const imageGenerator = new ImageGenerator(
-    barcode.encode().data,
+    barcode.data,
     returnType === 'png' ? ImageGeneratorTypes.PNG : ImageGeneratorTypes.JPEG,
   )
+
   const img = Buffer.from(imageGenerator.create())
 
   res.writeHead(200, {
-    'Content-Type': returnType === 'png' ? 'image/png' : 'image/jpeg',
+    'Content-Type': returnType === 'png' ? 'image/gif' : 'image/gif',
     'Content-Length': img.length,
   })
 

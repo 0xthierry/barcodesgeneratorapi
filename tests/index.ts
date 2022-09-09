@@ -10,6 +10,7 @@ import { charsToBarcode, CODE128, prepareInput } from '../src/barcodes/code128'
 import { getIndexBasedOnStringAndCharacterSetA } from '../src/barcodes/code128/setA'
 import { getIndexBasedOnStringAndCharacterSetB } from '../src/barcodes/code128/setB'
 import { getIndexBasedOnStringAndCharacterSetC } from '../src/barcodes/code128/setC'
+import { CODE128B } from '../src/barcodes/code128/code128B'
 
 // https://www.gtin.info/itf-14-barcodes/
 // https://www.barcodefaq.com/1d/interleaved-2of5/
@@ -429,8 +430,8 @@ assert.deepStrictEqual(
 const d55 = new CODE128('55')
 
 assert.deepStrictEqual(d55.encode(), {
-  checksum: '2',
-  data: '110100001001101110010011011100100110011001101100011101011',
+  checksum: '63',
+  data: '110100001001101110010011011100100101001100001100011101011',
   text: '55',
 })
 
@@ -449,8 +450,14 @@ const fromCodeAWithShiftB = new CODE128('\tHi\nHI')
  * mod = 2178 % 103 = 15 = checksum
  */
 assert.deepStrictEqual(fromCodeAWithShiftB.encode(), {
-  checksum: '15',
-  data: '1101000010010000110100110001010001111010001010000110100100001100101100010100011000100010101110011001100011101011',
-  /// //'1101000010010000110100110001010001111010001010000110100100001100101100010100011000100010101110011001100011101011'
+  checksum: '91',
+  data: '1101000010010000110100110001010001111010001010000110100100001100101100010100011000100010111101101101100011101011',
   text: '\tHi\nHI',
+})
+
+const code128A = new CODE128B('A')
+assert.deepStrictEqual(code128A.encode(), {
+  checksum: '34',
+  data: '1101001000010100011000100010110001100011101011',
+  text: 'A',
 })

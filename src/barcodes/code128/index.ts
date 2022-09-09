@@ -287,26 +287,27 @@ export class CODE128 implements IBarcode {
     let currentCharSet = ''
     let sum = 0
 
+    if (this.data[0] === START_DIGITS_BY_CHAR.A) {
+      currentCharSet = 'A'
+      sum += 103
+    } else if (this.data[0] === START_DIGITS_BY_CHAR.B) {
+      currentCharSet = 'B'
+      sum += 104
+    } else if (this.data[0] === START_DIGITS_BY_CHAR.C) {
+      currentCharSet = 'C'
+      sum += 105
+    }
+
+    const substring = this.data.substring(1)
+
     for (
       let index = 0, realIndex = 0;
-      index < this.data.length;
+      index < substring.length;
       index++, realIndex++
     ) {
-      const char = this.data[index]
+      const char = substring[index]
 
-      if (char === START_DIGITS_BY_CHAR.A) {
-        currentCharSet = 'A'
-        sum += 103 * (realIndex + 1)
-        continue
-      } else if (char === START_DIGITS_BY_CHAR.B) {
-        currentCharSet = 'B'
-        sum += 104 * (realIndex + 1)
-        continue
-      } else if (char === START_DIGITS_BY_CHAR.C) {
-        currentCharSet = 'C'
-        sum += 105 * (realIndex + 1)
-        continue
-      } else if (char === SWAP_BY_CHAR.A) {
+      if (char === SWAP_BY_CHAR.A) {
         currentCharSet = 'A'
         sum += SWAP_BY_TYPE.A * (realIndex + 1)
         continue
@@ -321,7 +322,7 @@ export class CODE128 implements IBarcode {
       } else if (char === SHIFT_CHAR) {
         sum += SHIFT * (realIndex + 1)
         const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
-          this.data[++index],
+          substring[++index],
           currentCharSet === 'A' ? 'B' : 'A',
         ) as number
         sum += barcodeIdx * (++realIndex + 1)
@@ -330,9 +331,9 @@ export class CODE128 implements IBarcode {
 
       const pValue =
         currentCharSet === 'C'
-          ? (this.data.substring(index).match(/(..?)/gm) as any[])[0] ||
-            this.data[index]
-          : this.data[index]
+          ? (substring.substring(index).match(/(..?)/gm) as any[])[0] ||
+            substring[index]
+          : substring[index]
 
       const barcodeIdx = getIndexBasedOnStringAndCharacterSet(
         pValue,
